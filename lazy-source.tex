@@ -1,0 +1,74 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[left=1.00in, right=1.00in, top=1.00in, bottom=1.00in]{geometry}
+\usepackage{bookman}
+\usepackage{listings}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={const, let, break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  sensitive=true
+}
+
+\lstset{
+   language=JavaScript,
+   basicstyle=\ttfamily,
+   showstringspaces=false,
+   showspaces=false,
+   escapechar={^}
+}
+\author{Ian Duncan}
+\title{A Lazy Version of Source}
+\begin{document}
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\chapter{Introduction}
+Most programming languages use what is known as \textit{strict evaluation}: when a function is applied to a set of arguments, these arguments are evaluated before they are passed to the function being called. There are, however, other evaluation methods. In \textit{call-by-name} evaluation, arguments are only evaluated when they are needed in the body of the applied function. \textit{Lazy evaluation}, also known as \textit{call-by-need evaluation}, is an optimization of call-by-name evaluation in which the result of evaluating arguments is memoized in case it is needed more than once. Lazy evaluation can make it easier to construct and work with infinite data structures. Streams, for example, can be represented with lists in a lazy language. Lazy evaluation is only interesting in a functional programming context: since the order of evaluation (or whether an expression is evaluated at all) becomes unpredictable, lazy evaluation is not of much use for effectful imperative programs. The most prominent adopter of lazy evaluation is the functional programming language Haskell. In our project, we modify the implementation of the Source language interpreter and transpiler to support lazy evaluation, with the goal of allowing people to write programs taking advantage of lazy evaluation in the functional Source \S1 and Source \S2.
+
+\section{Project Deliverables}
+We produce the following deliverables by the completion of our project:
+\begin{enumerate}
+\item A specification of `Lazy Source'
+\item A meta-circular evaluator for a lazy version of Source \S2
+\item A modified version of \texttt{js-slang} with an interpreter and transpiler supporting both lazy and strict evaluation
+\item Integration of our modified \texttt{js-slang} into the Source Academy \texttt{cadet-frontend}
+\item A set of examples demonstrating effective use of lazy evaluation
+\item Documentation of our efforts, contained in this document
+\end{enumerate}
+
+\chapter{Specification}
+
+\chapter{Meta-Circular Evaluator for Source \S2}
+
+\chapter{Interpreter and Transpiler}
+
+\chapter{Source Academy Frontend}
+
+\chapter{Example Programs}
+\section{The Power of Unevaluated Arguments}
+\begin{lstlisting}[language=JavaScript]
+function f(a, b) {
+	return a === 1 ? a : b;
+}
+
+f(1, head(null));
+\end{lstlisting}
+\section{An Infinite List of Integers}
+\begin{lstlisting}[language=haskell]
+intsfrom n = n : intsfrom (n + 1)
+\end{lstlisting}
+\section{Computing Factorial using an Infinite List}
+\begin{lstlisting}[language=haskell]
+\end{lstlisting}
+\section{The Min-Tree Problem}
+
+\end{document}
