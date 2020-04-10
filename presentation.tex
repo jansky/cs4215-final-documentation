@@ -5,22 +5,285 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{bussproofs}
+\usepackage{lmodern}
+\newenvironment{boxedprooftree}[1][c]
+ {\begin{tabular}[#1]{@{}c@{}}}
+ {\DisplayProof\end{tabular}}
+ 
 \usetheme{Copenhagen}
+\usepackage{listings}
+
+\lstdefinelanguage{JavaScript}{
+  keywords={const, let, break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, class},
+  morecomment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  sensitive=true
+}
+
+\lstset{
+   language=JavaScript,
+   showstringspaces=false,
+   basicstyle=\tiny,
+   showspaces=false,
+   tabsize=2,
+   escapechar={^}
+}
+\AtBeginSection[]
+{
+  \begin{frame}
+    \frametitle{Table of Contents}
+    \tableofcontents[currentsection]
+  \end{frame}
+}
 \begin{document}
+\newcommand{\mathsc}[1]{{\normalfont\textsc{#1}}}
+%\newcommand{thunk}[2]{\mathbb{T}\left(#1,#2\right)}
 \author{Ian Duncan and Ahmed Jellouli}
 \title{Lazy Evaluation for Source}
 %\subtitle{}
 %\logo{}
 %\institute{}
-%\date{}
-%\subject{}
+\date{CS4215 Final Project, 13 April}
+%\subject{Hi}
 %\setbeamercovered{transparent}
-%\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{navigation symbols}{}
 \begin{frame}[plain]
 	\maketitle
 \end{frame}
 
 \begin{frame}
-	\frametitle{}
+\frametitle{Table of Contents}
+\tableofcontents
 \end{frame}
+
+\section{Introduction}
+
+\begin{frame}
+\frametitle{Evaluation Strategies}
+\begin{itemize}
+\item<1->In \textbf{call-by-value} or \textbf{strict} evaluation, all arguments to a function are evaluated at application time.
+
+\item<2->In \textbf{call-by-name} evaluation, arguments to a function are evaluated each time they are needed.
+
+\item<3->In \textbf{call-by-need} or \textbf{lazy} evaluation, arguments to a function are evaluated the first time they are needed. The result of this evaluation is memoized in case the argument is needed again.
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Project Goals}
+We aimed to produce a lazy version of Source\S2, which entailed the following deliverables:\pause
+\begin{enumerate}
+\item<1->A specification for ``Lazy Source''
+\item<2->A metacircular evaluator
+\item<3->Support for lazy evaluation in the interpreter and transpiler of \texttt{js-slang}
+\item<4->Integration into Source Academy frontend
+\item<5->Example programs
+\item<6->Documentation
+\end{enumerate}
+\end{frame}
+
+\section{Specification}
+
+\begin{frame}
+\frametitle{Inspiration}
+Our specification follows the presentation of lazy evaluation in SICPJS\S4.2:\pause
+\begin{itemize}
+\item<1->Application of user-defined functions is non-strict
+\item<2->Application of built-ins (except for \texttt{pair} to support lazy lists), including binary operators is strict
+\item<3->Evaluation of name bindings is strict
+\end{itemize}
+\pause[4]Note that this specification differs from Haskell, where \textit{all} of these are non-strict.
+\end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Source\S2}
+In Source\S2, all function applications are strict:
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{App}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\Delta\Vdash E_1\rightarrowtail f$}
+  \AxiomC{$\Delta\Vdash E_2\rightarrowtail v_2,\ldots,\Delta\Vdash E_n\rightarrowtail v_n$}
+  \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(v_2,\ldots,v_n)$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+\end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Delayed Computations}
+\begin{itemize}
+\item<1-> We introduce the concept of a \textbf{thunk}, which is an unevaluated expression and its associated environment, to support delayed evaluation of arguments.
+\item<2-> In our denotation semantics, given an expression $E$ and associated environment $\Delta$, we represent the thunk of $E$ and $\Delta$ as $\mathbb{T}(E, \Delta)$
+\item<3-> Thunks can be \textbf{forced} as needed:
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{Force}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\Delta_1\Vdash E \rightarrowtail v$}
+  \AxiomC{}
+  \BinaryInfC{$\Delta_2\Vdash\mathbb{T}(E, \Delta_1)\rightarrowtail v$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Lazy Application}
+In Lazy Source, we say that a function $f$ is \textbf{strict} if it is built-in (except for \texttt{pair}), and \textbf{non-strict} otherwise.\pause
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{SApp}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\Delta\Vdash E_1\rightarrowtail f$}
+  \AxiomC{$\Delta\Vdash E_2\rightarrowtail v_2,\ldots,\Delta\Vdash E_n\rightarrowtail v_n$}
+  \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(v_2,\ldots,v_n)$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+where $f$ is \textbf{strict}.\pause
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{NSApp}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\Delta\Vdash E_1\rightarrowtail f$}
+  \AxiomC{$E_2,\ldots,E_n$}
+  \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(\mathbb{T}(E_2,\Delta),\ldots,\mathbb{T}(E_n,\Delta))$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+where $f$ is \textbf{non-strict}.
+\end{frame}
+\section{Metacircular Evaluator}
+\begin{frame}[fragile]
+\frametitle{Representing Thunks}
+We represent thunks as tagged lists:
+\begin{lstlisting}[language=JavaScript]
+function delay_it(exp, env) {
+    return list("thunk", exp, env);
+}
+
+function thunk_exp(thunk) {
+    return head(tail(thunk));
+}
+
+function thunk_env(thunk) {
+    return head(tail(tail(thunk)));
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Forcing Thunks}
+To get the actual value of evaluating an expression (i.e., not a thunk), we define an \texttt{actual\_value} function:
+\begin{lstlisting}
+function actual_value(exp, env) {
+    return force_it(evaluate(exp, env));
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Forcing Thunks}
+The function \texttt{force\_it} is mutually recursive with \texttt{actual\_value}, and handles memoization:
+\begin{lstlisting}
+function force_it(obj) {
+    if(is_thunk(obj)) {        
+        const result = actual_value(thunk_exp(obj), thunk_env(obj));        
+        set_head(obj, "evaluated_thunk");
+        set_head(tail(obj), result);
+        set_tail(tail(obj), null);        
+        return result;        
+    } else if(is_evaluated_thunk(obj)) {        
+        return thunk_value(obj);        
+    } else {
+        return obj;
+    }    
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Function Application}
+We define two functions to help us delay or force function arguments as needed:
+\begin{lstlisting}
+function list_of_arg_values(exps, env) {
+    return no_operands(exps)
+        ? null
+        : pair(actual_value(first_operand(exps), env),
+          list_of_arg_values(rest_operands(exps), env));
+}
+
+function list_of_delayed_args(exps, env) {
+    return no_operands(exps)
+        ? null
+        : pair(delay_it(first_operand(exps), env),
+          list_of_delayed_args(rest_operands(exps), env));
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Function Application}
+Then we modify \texttt{apply} to delay or force arguments as needed:
+\begin{lstlisting}
+function apply(fun, args, env) {
+    if (is_primitive_function(fun)) {
+      return apply_primitive_function(fun, list_of_arg_values(args,env));
+   } else if (is_compound_function(fun)) {
+      ...
+      const delayed_args = list_of_delayed_args(args, env);
+      const values = append(delayed_args, temp_values);			   
+      const result =
+         evaluate(body,
+                  extend_environment(
+                      names,
+                      values,
+                      function_environment(fun)));
+      ...
+   }
+   ...
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Lazy Lists}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Evaluate}
+Finally, we make a small change to the \texttt{evaluate} function to let \texttt{apply} have full control in handling function arguments. We also make sure the final result of evaluating a Source program is forced:
+\begin{lstlisting}
+function evaluate(stmt, env) {
+   return is_self_evaluating(stmt)
+          ?  stmt
+        ...
+        : is_application(stmt)
+          ? is_pair_constructor(stmt) ? construct_lazy_pair(operands(stmt),env) 
+           : apply(actual_value(operator(stmt), env),
+                  operands(stmt), env)
+        ...
+}
+
+function eval_toplevel(stmt) {
+   const program_block = make_block(stmt);
+   const value = actual_value(program_block, 
+                          the_global_environment);
+   ...
+}
+\end{lstlisting}
+\end{frame}
+
+\section{Interpreter \& Transpiler}
+
+\section{Source Academy Frontend}
+
+\section{Example Programs}
+
 \end{document}
