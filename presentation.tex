@@ -76,12 +76,12 @@
 \frametitle{Project Goals}
 We aimed to produce a lazy version of Source\S2, which entailed the following deliverables:\pause
 \begin{enumerate}
-\item<1->A specification for ``Lazy Source''
-\item<2->A metacircular evaluator
-\item<3->Support for lazy evaluation in the interpreter and transpiler of \texttt{js-slang}
-\item<4->Integration into Source Academy frontend
+\item<2->A specification for ``Lazy Source'' 
+\item<3->A metacircular evaluator
+\item<4->Support for lazy evaluation in the interpreter and transpiler of \texttt{js-slang}
+\item<5->Integration into Source Academy frontend
 \item<5->Example programs
-\item<6->Documentation
+\item<7->Documentation
 \end{enumerate}
 \end{frame}
 
@@ -117,7 +117,7 @@ In Source\S2, all function applications are strict:
 \frametitle{Denotational Semantics of Delayed Computations}
 \begin{itemize}
 \item<1-> We introduce the concept of a \textbf{thunk}, which is an unevaluated expression and its associated environment, to support delayed evaluation of arguments.
-\item<2-> In our denotation semantics, given an expression $E$ and associated environment $\Delta$, we represent the thunk of $E$ and $\Delta$ as $\theta(E, \Delta)$
+\item<2-> In our denotation semantics, given an expression $E$ and associated environment $\Delta$, we represent the thunk of $E$ and $\Delta$ as $\theta(E, \Delta)$.
 \item<3-> Thunks can be \textbf{forced} as needed:
 \[
 \begin{tabular}{@{} l c @{}}
