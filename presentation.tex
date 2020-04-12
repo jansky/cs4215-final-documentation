@@ -15,7 +15,7 @@
 \usepackage{listings}
 
 \lstdefinelanguage{JavaScript}{
-  keywords={const, let, break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, class, constructor, public, private, boolean, string, number, export,yield, any},
+  keywords={const, let, break, case, catch, continue, debugger, default, delete, do, else, finally, for, function, if, in, instanceof, new, return, switch, this, throw, try, typeof, var, void, while, with, class, constructor, public, private, boolean, string, number, export,yield, any, true, false, undefined, null},
   morecomment=[l]{//},
   morecomment=[s]{/*}{*/},
   morestring=[b]',
@@ -40,6 +40,7 @@
 }
 \begin{document}
 \newcommand{\mathsc}[1]{{\normalfont\textsc{#1}}}
+\newcommand{\tforce}[2]{\mathfrak{V}\left(#1, #2\right)}
 %\newcommand{thunk}[2]{\mathbb{T}\left(#1,#2\right)}
 \author{Ian Duncan and Ahmed Jellouli}
 \title{Lazy Evaluation for Source}
@@ -80,7 +81,7 @@ We aimed to produce a lazy version of Source\S2, which entailed the following de
 \item<3->A metacircular evaluator
 \item<4->Support for lazy evaluation in the interpreter and transpiler of \texttt{js-slang}
 \item<5->Integration into Source Academy frontend
-\item<5->Example programs
+\item<6->Example programs
 \item<7->Documentation
 \end{enumerate}
 \end{frame}
@@ -99,49 +100,50 @@ Our specification follows the presentation of lazy evaluation in SICPJS\S4.2:\pa
 \end{frame}
 
 \begin{frame}
-\frametitle{Denotational Semantics of Source\S2}
-In Source\S2, all function applications are strict:
-\[
-\begin{tabular}{@{} l c @{}}
-[\textsc{App}] &
-  \begin{boxedprooftree}
-  \AxiomC{$\Delta\Vdash E_1\rightarrowtail f$}
-  \AxiomC{$\Delta\Vdash E_2\rightarrowtail v_2,\ldots,\Delta\Vdash E_n\rightarrowtail v_n$}
-  \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(v_2,\ldots,v_n)$}
-  \end{boxedprooftree}
-\end{tabular}
-\]
-\end{frame}
-
-\begin{frame}
 \frametitle{Denotational Semantics of Delayed Computations}
 \begin{itemize}
 \item<1-> We introduce the concept of a \textbf{thunk}, which is an unevaluated expression and its associated environment, to support delayed evaluation of arguments.
-\item<2-> In our denotation semantics, given an expression $E$ and associated environment $\Delta$, we represent the thunk of $E$ and $\Delta$ as $\theta(E, \Delta)$.
-\item<3-> Thunks can be \textbf{forced} as needed:
-\[
-\begin{tabular}{@{} l c @{}}
-[\textsc{Force}] &
-  \begin{boxedprooftree}
-  \AxiomC{$\Delta_1\Vdash E \rightarrowtail v$}
-  \AxiomC{}
-  \BinaryInfC{$\Delta_2\Vdash\theta(E, \Delta_1)\rightarrowtail v$}
-  \end{boxedprooftree}
-\end{tabular}
-\]
+\item<2-> In our denotation semantics, given an expression $E$ and associated environment $\Delta$, we represent the thunk of $E$ and $\Delta$ as $\theta(\Delta, E)$.
+\item<3-> Thunks can be \textbf{forced} as needed to yield a ``final result'' of evaluating an $E$ with respect to $\Delta$ that is not a thunk.
 \end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Forcing Thunks}
+Let $\mathbb{T}$ be the set of all thunks. Then, define the function $\mathfrak{F}:\mathbb{T}\to\textbf{EV}$ by
+\[ \mathfrak{F}\left(\theta(\Delta, E)\right) = \begin{cases} 
+      v & v\notin\mathbb{T} \\
+      \mathfrak{F}(v) & \text{otherwise},
+   \end{cases}
+\]
+where $\Delta\Vdash E \rightarrowtail v$.
+
+
 
 \end{frame}
 
 \begin{frame}
-\frametitle{Denotational Semantics of Lazy Application}
+\frametitle{Denotational Semantics of Forcing Expressions}
+Define the function $\mathfrak{V}:\textbf{Env}\times\textbf{S2}\to\mathbf{EV}$ by
+\[ \mathfrak{V}\left(\Delta,E\right) = \begin{cases} 
+      v & v\notin\mathbb{T} \\
+      \mathfrak{F}(v) & \text{otherwise},
+   \end{cases}
+\]
+where $\Delta\Vdash E \rightarrowtail v$.\pause
+
+\vspace{1em}We use $\mathfrak{V}$ instead of $\cdot\Vdash\cdot\rightarrowtail$ to evaluate entire programs, because we do not want the final result to be a thunk.
+\end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Application}
 In Lazy Source, we say that a function $f$ is \textbf{strict} if it is built-in (except for \texttt{pair}), and \textbf{non-strict} otherwise.\pause
 \[
 \begin{tabular}{@{} l c @{}}
 [\textsc{SApp}] &
   \begin{boxedprooftree}
-  \AxiomC{$\Delta\Vdash E_1\rightarrowtail f$}
-  \AxiomC{$\Delta\Vdash E_2\rightarrowtail v_2,\ldots,\Delta\Vdash E_n\rightarrowtail v_n$}
+  \AxiomC{$\tforce{\Delta}{E_1}=f$}
+  \AxiomC{$\tforce{\Delta}{E_2}=v_2,\ldots,\tforce{\Delta}{E_n}=v_n$}
   \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(v_2,\ldots,v_n)$}
   \end{boxedprooftree}
 \end{tabular}
@@ -151,14 +153,67 @@ where $f$ is \textbf{strict}.\pause
 \begin{tabular}{@{} l c @{}}
 [\textsc{NSApp}] &
   \begin{boxedprooftree}
-  \AxiomC{$\Delta\Vdash E_1\rightarrowtail f$}
+  \AxiomC{$\tforce{\Delta}{E_1}=f$}
   \AxiomC{$E_2,\ldots,E_n$}
-  \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(\theta(E_2,\Delta),\ldots,\theta(E_n,\Delta))$}
+  \BinaryInfC{$\Delta\Vdash E_1(E_2,\ldots,E_n)\rightarrowtail f(\theta(\Delta, E_2),\ldots,\theta(\Delta, E_n))$}
   \end{boxedprooftree}
 \end{tabular}
 \]
 where $f$ is \textbf{non-strict}.
 \end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Operators}
+Binary and unary operators always force their arguments:
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{BinOp}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\tforce{\Delta}{E_1}=v_1$}
+  \AxiomC{$\tforce{\Delta}{E_2}=v_2$}
+  \BinaryInfC{$\Delta\Vdash E_1\cdot E_2\rightarrowtail v_1 \cdot v_2$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+where $\cdot\in\{+,*,-,/,\%,\&\&,||\,>,<,>=,<=,== =,!==\}$.
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{UnOp}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\tforce{\Delta}{E}=v$}
+  \AxiomC{}
+  \BinaryInfC{$\Delta\Vdash \$E\rightarrowtail \$v$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+where $\$\in\{!,-\}$.
+\end{frame}
+
+\begin{frame}
+\frametitle{Denotational Semantics of Conditional Expressions}
+Conditional expressions force their conditions:
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{CondTrue}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\tforce{\Delta}{E_1}=\texttt{true}$}
+  \AxiomC{$\Delta\Vdash E_2\rightarrowtail v_2$}
+  \BinaryInfC{$\Delta\Vdash E_1\text{ }?\text{ }E_2 : E_3\rightarrowtail v_2$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+\[
+\begin{tabular}{@{} l c @{}}
+[\textsc{CondFalse}] &
+  \begin{boxedprooftree}
+  \AxiomC{$\tforce{\Delta}{E_1}=\texttt{false}$}
+  \AxiomC{$\Delta\Vdash E_3\rightarrowtail v_3$}
+  \BinaryInfC{$\Delta\Vdash E_1\text{ }?\text{ }E_2 : E_3\rightarrowtail v_3$}
+  \end{boxedprooftree}
+\end{tabular}
+\]
+\end{frame}
+
 \section{Metacircular Evaluator}
 \begin{frame}[fragile]
 \frametitle{Representing Thunks}
@@ -264,7 +319,7 @@ We implement lazy lists in the metacircular evaluator by:
 
 \begin{frame}[fragile]
 \frametitle{Evaluate}
-Finally, we make a small change to the \texttt{evaluate} function to let \texttt{apply} have full control in handling function arguments. We also make sure the final result of evaluating a Source program is forced:
+Finally, we make a small change to the \texttt{evaluate} function to let \texttt{apply} have full control in handling function arguments. We also force thunks as needed (e.g., at the top level and in conditional expressions):
 \begin{lstlisting}
 function evaluate(stmt, env) {
    return is_self_evaluating(stmt)
@@ -472,7 +527,7 @@ We build on the work of Anubhav and Arsalan to add lazy variants of Source\S1 an
 \end{center}
 \end{frame}
 
-\section{Example Programs}
+\section{Example Program}
 
 
 \subsection{A List of all Factorial Numbers}
