@@ -254,6 +254,12 @@ function apply(fun, args, env) {
 
 \begin{frame}[fragile]
 \frametitle{Lazy Lists}
+We implement lazy lists in the metacircular evaluator by:
+\begin{itemize}
+\item<1->making  \texttt{pair}, \texttt{head} and \texttt{tail} primitive operators of the language. 
+\item<2->evaluating \texttt{pair} as a "special case", whereby the evaluation is lazy and the arguments are not forced.
+\item<3->Arguments of \texttt{head} and \texttt{tail} need to be forced because we make use of the underlying source implementation.
+\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -376,8 +382,64 @@ export function callIfFuncAndRightArgs(candidate: any, line: number, column: num
 \subsection{Lazy Lists}
 
 \begin{frame}
-\frametitle{Lazy Lists}
+\begin{itemize}
+\item<1->\frametitle{Lazy Lists}
+Primitive list constructors: \texttt{pair} and \texttt{list} are are now wrapped by an object definition \texttt{LazyBuiltIn} in order to indicate that their arguments need to be thunked.
+\item<2-> \texttt{head}, \texttt{tail}, \texttt{is\_pair} and \texttt{is\_null} can remain as the usual primitive functions as we need to force their arguments.
+\item<3->Note that this implies that not even \texttt{head} or \texttt{tail} will force elements of the list; they will return the corresponding thunks instead. 
+\item<4->We modify the interpreter and the transpiler accordingly to deal with the case of applying \texttt{LazyBuiltIn} instances.
+\end{itemize}
 \end{frame}
+
+\begin{frame}[fragile]
+\frametitle{List standard library}
+\begin{itemize}
+\item<1->The list "prelude" functions need to be slightly modified in order to stay consistent with the non lazy lists, specifically in error handling. For example, the implementation of \texttt{list\_ref}:
+\begin{lstlisting}
+function list_ref(xs, n) {
+  return n === 0 ? head(xs) : list_ref(tail(xs), n - 1);
+}
+\end{lstlisting}
+leads to an infinite loop is n is negative, because the \texttt{tail(xs)} call is never evaluated.
+Instead force its evaluation:
+
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{List standard library}
+\begin{lstlisting}
+function list_ref(xs, n) {
+  const rest = tail(xs);
+  return n === 0 ? head(xs) : list_ref(rest, n - 1);
+}
+\end{lstlisting}
+\begin{itemize}
+    \item <1-> A similar modification is needed for \texttt{enum\_list}.
+    \item <2-> Aim was to stay consistent with non lazy lists behaviour. 
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Some interesting problems going forward}
+\begin{itemize}
+    \item lazy list allow us to create seemingly "infinite" streams, e.g: \texttt{const a = pair(1,a);} creates an infinite lists of ones.
+    \item <2-> This introduces problems for functions like \texttt{equal, remove\_all, member, filter} which can run into infinite recursion, and \texttt{reverse} which should simply not be usable on infinite lists.
+    \item<3-> The question is then whether we could modify these functions so that, for e.g \break \texttt{const a = pair (1,a); remove\_all(1,a);} would evaluate to \texttt{null.}
+\end{itemize}
+\end{frame}
+
+\begin{frame}
+\frametitle{Some interesting problems going forward}
+\begin{itemize}
+    \item<1-> or : \break
+    \texttt{const a = pair(1,a); \break const b = pair (1,b); \break equal(a,b);} evaluates to \texttt{true.}
+    \item<2-> Most likely not possible in the general case but might be done if the list is cyclic. Idea is to detect cycles in the list and operate on these finite portions. 
+\end{itemize}
+\end{frame}
+
+
+
 
 \subsection{Testing}
 
@@ -412,20 +474,6 @@ We build on the work of Anubhav and Arsalan to add lazy variants of Source\S1 an
 
 \section{Example Programs}
 
-\subsection{The Power of Delayed Arguments}
-
-\begin{frame}[fragile]
-\frametitle{The Power of Delayed Arguments}
-Consider the program:
-\begin{lstlisting}
-function f(a, b) {
-	return a === 1 ? a : b;
-}
-
-f(1, head(null));
-\end{lstlisting}\pause
-Under strict evaluation, the call to \texttt{f} raises an error. However, under lazy evaluation \texttt{head(null)} is never evaluated because \texttt{b} is not used in \texttt{f} when \texttt{a} is 1, so no error is raised.
-\end{frame}
 
 \subsection{A List of all Factorial Numbers}
 
@@ -477,3 +525,4 @@ To compute $n!$, just find the $n$th element of \texttt{factorials}.
 \end{frame}
 
 \end{document}
+
