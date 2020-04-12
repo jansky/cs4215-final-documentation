@@ -470,20 +470,6 @@ square(incX()); // should evaluate to 4
 
 \section{Example Programs}
 
-\subsection{The Power of Delayed Arguments}
-
-\begin{frame}[fragile]
-\frametitle{The Power of Delayed Arguments}
-Consider the program:
-\begin{lstlisting}
-function f(a, b) {
-	return a === 1 ? a : b;
-}
-
-f(1, head(null));
-\end{lstlisting}\pause
-Under strict evaluation, the call to \texttt{f} raises an error. However, under lazy evaluation \texttt{head(null)} is never evaluated because \texttt{b} is not used in \texttt{f} when \texttt{a} is 1, so no error is raised.
-\end{frame}
 
 \subsection{A List of all Factorial Numbers}
 
