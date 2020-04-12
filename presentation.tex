@@ -579,5 +579,28 @@ Conceptually, \texttt{factorials} is the list
 To compute $n!$, just find the $n$th element of \texttt{factorials}.
 \end{frame}
 
+\subsection{Generating prime numbers using the Sieve of Eratosthenes}
+
+\begin{frame}
+\frametitle{Algorithm}
+\begin{itemize}
+    \item start with all the natural numbers from 2.
+    \item 2 is a prime number, remove all multiples of two from the list.
+    \item next item in the list is 3, remove all multiples of 3.
+    \item etc..
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Very easy to implement using lazy lists!}
+
+\begin {lstlisting}
+function sieve (l) { 
+          return pair(head(a), filter (y => y % head(a) !== 0,tail(a)); }
+const primes = sieve(intsFrom(2));}
+\end{lstlisting}
+
+\end{frame}
 \end{document}
 
