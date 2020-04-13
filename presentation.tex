@@ -596,8 +596,8 @@ To compute $n!$, just find the $n$th element of \texttt{factorials}.
 \frametitle{Very easy to implement using lazy lists!}
 
 \begin {lstlisting}
-function sieve (l) { 
-          return pair(head(a), filter (y => y % head(a) !== 0,tail(a)); }
+function sieve (a) { 
+          return pair(head(a), sieve(filter (y => y % head(a) !== 0,tail(a))); }
 const primes = sieve(intsFrom(2));}
 \end{lstlisting}
 
