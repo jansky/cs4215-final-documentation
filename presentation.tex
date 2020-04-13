@@ -312,7 +312,7 @@ function apply(fun, args, env) {
 We implement lazy lists in the metacircular evaluator by:
 \begin{itemize}
 \item<1->making  \texttt{pair}, \texttt{head} and \texttt{tail} primitive operators of the language. 
-\item<2->evaluating \texttt{pair} as a "special case", whereby the evaluation is lazy and the arguments are not forced.
+\item<2->evaluating \texttt{pair} as a ``special case'', whereby the evaluation is lazy and the arguments are not forced.
 \item<3->Arguments of \texttt{head} and \texttt{tail} need to be forced because we make use of the underlying source implementation.
 \end{itemize}
 \end{frame}
@@ -527,7 +527,7 @@ We build on the work of Anubhav and Arsalan to add lazy variants of Source\S1 an
 \end{center}
 \end{frame}
 
-\section{Example Program}
+\section{Example Programs}
 
 
 \subsection{A List of all Factorial Numbers}
